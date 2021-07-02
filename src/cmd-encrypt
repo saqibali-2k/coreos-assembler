@@ -18,5 +18,5 @@ for path in files:
     if not os.path.exists(path):
         raise FileNotFoundError(path)
 
-subprocess.check_call(["/usr/bin/openssl", "smime", "-encrypt", "-aes-256-cbc", "-in", args.input,
+subprocess.check_call(["openssl", "smime", "-encrypt", "-aes-256-cbc", "-in", args.input,
                      "-out", args.output, "-outform", "PEM", args.cert])
