@@ -27,10 +27,14 @@ import (
 	"strings"
 	"time"
 
+<<<<<<< HEAD
 	"github.com/coreos/go-semver/semver"
+=======
+>>>>>>> d2ee8ec9 (Removed kola-denylist.yaml sugar from cmd-kola and added it to kola)
 	"github.com/coreos/pkg/capnslog"
 	"github.com/kballard/go-shellquote"
 	"github.com/pkg/errors"
+	"gopkg.in/yaml.v2"
 
 	"github.com/coreos/mantle/harness"
 	"github.com/coreos/mantle/harness/reporters"
@@ -277,7 +281,80 @@ func testRequiresInternet(test *register.Test) bool {
 	return false
 }
 
+<<<<<<< HEAD
 func filterTests(tests map[string]*register.Test, patterns []string, pltfrm string, version semver.Version) (map[string]*register.Test, error) {
+=======
+//
+type DenyListObj struct {
+	Pattern string   `yaml:"pattern"`
+	Tracker string   `yaml:"tracker"`
+	Streams []string `yaml:"streams"`
+	Arches  []string `yaml:"arches"`
+}
+
+type ManifestData struct {
+	AddCommitMetadata struct {
+		FcosStream string `yaml:"fedora-coreos.stream"`
+	} `yaml:"add-commit-metadata"`
+}
+
+func parseDenyList() []string {
+	var objs []DenyListObj
+	var patterns []string
+
+	// Parse kola-denylist into structs
+	denyListFile, err := ioutil.ReadFile("src/config/kola-denylist.yaml")
+
+	if err != nil {
+		return patterns
+	}
+
+	err = yaml.Unmarshal(denyListFile, &objs)
+
+	if err != nil {
+		return patterns
+	}
+
+	// Get stream
+	stream := ""
+
+	manifestFile, err := ioutil.ReadFile("src/config/manifest.yaml")
+	var manifest ManifestData
+
+	if err == nil {
+		err = yaml.Unmarshal(manifestFile, &manifest)
+	}
+
+	if err == nil {
+		stream = manifest.AddCommitMetadata.FcosStream
+	}
+
+	arch := system.RpmArch()
+
+	// Accumulate patterns filtering by stream and arch
+	for _, obj := range objs {
+		if !hasString(arch, obj.Arches) {
+			continue
+		}
+
+		if len(stream) > 0 && !hasString(stream, obj.Streams) {
+			continue
+		}
+
+		fmt.Printf("⚠️  Skipping kola test pattern \"%s\":", obj.Pattern)
+		fmt.Printf("⚠️	%s", obj.Tracker)
+		patterns = append(patterns, obj.Pattern)
+	}
+
+	return patterns
+
+}
+
+func filterTests(tests map[string]*register.Test, patterns []string, pltfrm string) (map[string]*register.Test, error) {
+	patternsFromYaml := parseDenyList()
+	patterns = append(patterns, patternsFromYaml...)
+
+>>>>>>> d2ee8ec9 (Removed kola-denylist.yaml sugar from cmd-kola and added it to kola)
 	r := make(map[string]*register.Test)
 
 	checkPlatforms := []string{pltfrm}
