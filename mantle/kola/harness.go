@@ -27,10 +27,7 @@ import (
 	"strings"
 	"time"
 
-<<<<<<< HEAD
 	"github.com/coreos/go-semver/semver"
-=======
->>>>>>> d2ee8ec9 (Removed kola-denylist.yaml sugar from cmd-kola and added it to kola)
 	"github.com/coreos/pkg/capnslog"
 	"github.com/kballard/go-shellquote"
 	"github.com/pkg/errors"
@@ -281,10 +278,6 @@ func testRequiresInternet(test *register.Test) bool {
 	return false
 }
 
-<<<<<<< HEAD
-func filterTests(tests map[string]*register.Test, patterns []string, pltfrm string, version semver.Version) (map[string]*register.Test, error) {
-=======
-//
 type DenyListObj struct {
 	Pattern string   `yaml:"pattern"`
 	Tracker string   `yaml:"tracker"`
@@ -354,7 +347,6 @@ func filterTests(tests map[string]*register.Test, patterns []string, pltfrm stri
 	patternsFromYaml := parseDenyList()
 	patterns = append(patterns, patternsFromYaml...)
 
->>>>>>> d2ee8ec9 (Removed kola-denylist.yaml sugar from cmd-kola and added it to kola)
 	r := make(map[string]*register.Test)
 
 	checkPlatforms := []string{pltfrm}
