@@ -343,7 +343,7 @@ func parseDenyList() []string {
 
 }
 
-func filterTests(tests map[string]*register.Test, patterns []string, pltfrm string) (map[string]*register.Test, error) {
+func filterTests(tests map[string]*register.Test, patterns []string, pltfrm string, version semver.Version) (map[string]*register.Test, error) {
 	patternsFromYaml := parseDenyList()
 	patterns = append(patterns, patternsFromYaml...)
 
