@@ -345,6 +345,7 @@ func parseDenyList() []string {
 		patterns = append(patterns, obj.Pattern)
 	}
 
+	fmt.Println(patterns)
 	return patterns
 
 }
