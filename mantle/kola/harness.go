@@ -299,12 +299,14 @@ func parseDenyList() []string {
 	denyListFile, err := ioutil.ReadFile("src/config/kola-denylist.yaml")
 
 	if err != nil {
+		fmt.Println(err)
 		return patterns
 	}
 
 	err = yaml.Unmarshal(denyListFile, &objs)
 
 	if err != nil {
+		fmt.Println(err)
 		return patterns
 	}
 
@@ -316,10 +318,14 @@ func parseDenyList() []string {
 
 	if err == nil {
 		err = yaml.Unmarshal(manifestFile, &manifest)
+	} else {
+		fmt.Println(err)
 	}
 
 	if err == nil {
 		stream = manifest.AddCommitMetadata.FcosStream
+	} else {
+		fmt.Println(err)
 	}
 
 	arch := system.RpmArch()
@@ -334,8 +340,8 @@ func parseDenyList() []string {
 			continue
 		}
 
-		fmt.Printf("⚠️  Skipping kola test pattern \"%s\":", obj.Pattern)
-		fmt.Printf("⚠️	%s", obj.Tracker)
+		fmt.Printf("⚠️  Skipping kola test pattern \"%s\":\n", obj.Pattern)
+		fmt.Printf("⚠️	%s\n", obj.Tracker)
 		patterns = append(patterns, obj.Pattern)
 	}
 
