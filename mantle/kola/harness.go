@@ -525,7 +525,8 @@ func runProvidedTests(tests map[string]*register.Test, patterns []string, multip
 	//    either way
 	patternsFromYaml := parseDenyList()
 	patterns = append(patterns, patternsFromYaml...)
-
+	fmt.Printf("skipping: %v", patterns)
+	
 	tests, err := filterTests(tests, patterns, pltfrm, semver.Version{})
 	if err != nil {
 		plog.Fatal(err)
