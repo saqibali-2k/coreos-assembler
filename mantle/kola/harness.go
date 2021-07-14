@@ -291,23 +291,22 @@ type ManifestData struct {
 	} `yaml:"add-commit-metadata"`
 }
 
-func parseDenyList() []string {
+func parseDenyListYaml() {
 	var objs []DenyListObj
-	var patterns []string
 
 	// Parse kola-denylist into structs
 	denyListFile, err := ioutil.ReadFile("src/config/kola-denylist.yaml")
 
 	if err != nil {
 		fmt.Println(err)
-		return patterns
+		return
 	}
 
 	err = yaml.Unmarshal(denyListFile, &objs)
 
 	if err != nil {
 		fmt.Println(err)
-		return patterns
+		return
 	}
 
 	// Get stream
@@ -332,21 +331,18 @@ func parseDenyList() []string {
 
 	// Accumulate patterns filtering by stream and arch
 	for _, obj := range objs {
-		if !hasString(arch, obj.Arches) {
+		if !hasString(arch, obj.Arches) && len(obj.Arches) > 0 {
 			continue
 		}
 
-		if len(stream) > 0 && !hasString(stream, obj.Streams) {
+		if len(stream) > 0 && !hasString(stream, obj.Streams) && len(obj.Streams) > 0 {
 			continue
 		}
 
 		fmt.Printf("⚠️  Skipping kola test pattern \"%s\":\n", obj.Pattern)
 		fmt.Printf("⚠️	%s\n", obj.Tracker)
-		patterns = append(patterns, obj.Pattern)
+		DenylistedTests = append(DenylistedTests, obj.Pattern)
 	}
-
-	fmt.Println(patterns)
-	return patterns
 
 }
 
@@ -523,10 +519,10 @@ func runProvidedTests(tests map[string]*register.Test, patterns []string, multip
 	// 1) none of the selected tests care about the version
 	// 2) glob is an exact match which means minVersion will be ignored
 	//    either way
-	patternsFromYaml := parseDenyList()
-	patterns = append(patterns, patternsFromYaml...)
-	fmt.Printf("skipping: %v", patterns)
-	
+
+	// Add denylisted tests from kola-denylist.yaml to DenylistedTests
+	parseDenyListYaml()
+
 	tests, err := filterTests(tests, patterns, pltfrm, semver.Version{})
 	if err != nil {
 		plog.Fatal(err)
