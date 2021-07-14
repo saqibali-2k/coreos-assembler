@@ -351,8 +351,6 @@ func parseDenyList() []string {
 }
 
 func filterTests(tests map[string]*register.Test, patterns []string, pltfrm string, version semver.Version) (map[string]*register.Test, error) {
-	patternsFromYaml := parseDenyList()
-	patterns = append(patterns, patternsFromYaml...)
 
 	r := make(map[string]*register.Test)
 
@@ -525,6 +523,9 @@ func runProvidedTests(tests map[string]*register.Test, patterns []string, multip
 	// 1) none of the selected tests care about the version
 	// 2) glob is an exact match which means minVersion will be ignored
 	//    either way
+	patternsFromYaml := parseDenyList()
+	patterns = append(patterns, patternsFromYaml...)
+
 	tests, err := filterTests(tests, patterns, pltfrm, semver.Version{})
 	if err != nil {
 		plog.Fatal(err)
