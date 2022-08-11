@@ -383,7 +383,23 @@ EOF
         # Because right now rpm-ostree doesn't look for .repo files in
         # each included dir.
         # https://github.com/projectatomic/rpm-ostree/issues/1628
-        cp "${workdir}"/src/config/*.repo "${tmp_overridesdir}"/
+        repos_found=0
+        if [ -n "$(find "${workdir}"/src/config -maxdepth 1 -name '*.repo' -print -quit)" ]; then
+            repos_found=1
+            echo "DEBUG: src/config *.repo found"
+            cp "${workdir}"/src/config/*.repo "${tmp_overridesdir}"/
+        fi
+        
+        if [ -n "$(find "${workdir}"/src/extrepos -maxdepth 1 -name '*.repo' -print -quit)" ]; then
+            repos_found=1
+            echo "DEBUG: extrepos *.repo found"
+            cp "${workdir}"/src/extrepos/*.repo "${tmp_overridesdir}"/
+        fi
+
+        if [ ${repos_found} == 0 ]; then
+            echo "ERROR: no *.repo files were found"
+            exit 1
+        fi
         manifest=${override_manifest}
     fi
 
@@ -462,12 +478,23 @@ EOF
     else
         rm -vf "${local_overrides_lockfile}"
     fi
+    
+    contentset_paths=()
     if [ -e "${configdir}/content_sets.yaml" ]; then
+        contentset_paths+=( "${configdir}/content_sets.yaml" )
+    fi
+    if [ -e "${workdir}/src/extrepos/content_sets.yaml" ]; then
+        contentset_paths+=( "${workdir}/src/extrepos/content_sets.yaml" )
+    fi
+    
+    if [ ! ${#contentset_paths[@]} -eq 0 ]; then
         mkdir -p "${tmp_overridesdir}"/contentsetrootfs/usr/share/buildinfo/
-        # create_content_manifest takes in the base repos and maps them to their pulp repository IDs
-        # available in content_sets.yaml. The mapped repos are then available in content_manifest.json
-        # Feature: https://issues.redhat.com/browse/GRPA-3731
-        create_content_manifest "$configdir"/content_sets.yaml "${tmp_overridesdir}/contentsetrootfs/usr/share/buildinfo/content_manifest.json"
+        for path in "${contentset_paths[@]}"; do
+            # create_content_manifest takes in the base repos and maps them to their pulp repository IDs
+            # available in content_sets.yaml. The mapped repos are then available in content_manifest.json
+            # Feature: https://issues.redhat.com/browse/GRPA-3731
+            create_content_manifest "${path}" "${tmp_overridesdir}/contentsetrootfs/usr/share/buildinfo/content_manifest.json"
+        done
         # adjust permissions to appease the ext.config.shared.files.file-directory-permissions test
         chmod 0644 "${tmp_overridesdir}/contentsetrootfs/usr/share/buildinfo/content_manifest.json"
 

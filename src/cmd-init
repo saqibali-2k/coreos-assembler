@@ -10,12 +10,13 @@ FORCE=0
 BRANCH=""
 COMMIT=""
 TRANSIENT=0
+EXTREPOS=""
 
 print_help() {
     cat 1>&2 <<'EOF'
 Usage: coreos-assembler init --help
        coreos-assembler init [--force] [--transient] [--branch BRANCH] 
-                             [--commit COMMIT] GITCONFIG [SUBDIR]
+                             [--commit COMMIT] [--extrepos REPO] GITCONFIG [SUBDIR]
 
   For example, you can use https://github.com/coreos/fedora-coreos-config
   as GITCONFIG, or fork it.  Another option useful for local development
@@ -26,6 +27,10 @@ Usage: coreos-assembler init --help
   If specified, SUBDIR is a subdirectory of the git repository that should
   contain manifest.yaml and image.yaml (or image.ks).
 
+  Use --extrarepos for builds that need .repo files and content sets which are not in GITCONFIG.
+  For example: files need to be hidden behind a firewall in REPO. Using this
+  option will clone REPO alongside GITCONFIG, thus you may need to configure certificates.
+
   Use `--transient` for builds that will throw away all cached data on success/failure,
   and should hence not invoke `fsync()` for example.
 EOF
@@ -33,7 +38,7 @@ EOF
 
 # Call getopt to validate the provided input.
 rc=0
-options=$(getopt --options hfb:c: --longoptions help,force,transient,branch:,commit: -- "$@") || rc=$?
+options=$(getopt --options hfb:c:e: --longoptions help,force,transient,branch:,commit:,extrepos: -- "$@") || rc=$?
 [ $rc -eq 0 ] || {
     print_help
     exit 1
@@ -66,6 +71,15 @@ while true; do
                 shift ;;
             *)
                 COMMIT="$2"
+                shift ;;
+        esac
+        ;;
+    -e | --extrepos)
+        case "$2" in
+            "")
+                shift ;;
+            *)
+                EXTREPOS="$2"
                 shift ;;
         esac
         ;;
@@ -148,5 +162,9 @@ if test "${TRANSIENT}" = 1; then
     touch tmp/cosa-transient
 fi
 
+if [ -n "${EXTREPOS}" ]; then
+    mkdir -p src/extrepos
+    git clone --depth=1 "${EXTREPOS}" src/extrepos
+fi
 set +x
 echo "Initialized $PWD as coreos-assembler working directory."
